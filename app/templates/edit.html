@@ -1,0 +1,28 @@
+<!-- extend base layout -->
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Edit Your Profile</h1>
+  <form acton="" method="post" name ="edit">
+    {{form.hidden_tag()}}
+    <table>
+      <tr>
+          <td>Your nickname:</td>
+          <td>
+            {{ form.nickname }}
+            {% for error in form.errors.nickname %}
+            <br><span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+          </td>
+      </tr>
+      <tr>
+          <td>About Yourself:</td>
+          <td>{{ form.nickname }}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type="submit" value="Save Changes"></td>
+        </tr>
+    </table>
+  </form>
+{% endblock %}
