@@ -1,9 +1,9 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db, lm, oid
-from .forms import LoginForm, EditForm, PostForm
+from .forms import LoginForm, EditForm, PostForm, SearchForm
 from .models import User, Post
-from config import POSTS_PER_PAGE
+from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS
 from datetime import datetime
 
 #returns all user id(primary_keys) from sqlite table using ORM
@@ -84,6 +84,14 @@ def user(nickname, page=1):
     posts = user.posts.paginate(page, POSTS_PER_PAGE, False)
     return render_template('user.html', user=user,posts= posts)
 
+@app.route('/results/<query>')
+@login_required
+def results(query):
+    results = Post.query.whoosh_search(query, MAX_SEARCH_RESULTS).all()
+    return render_template('results.html',
+                           query=query,
+                           results=results)
+
 @app.before_request
 def before_request():
     g.user = current_user
@@ -91,6 +99,7 @@ def before_request():
         g.user.last_seen = datetime.utcnow()
         db.session.add(g.user)
         db.session.commit()
+        g.search_form= SearchForm()
 
 @app.route('/edit', methods=['GET', 'POST'])
 @login_required
@@ -142,6 +151,13 @@ def unfollow(nickname):
     db.session.commit()
     flash('You have stopped following' + nickname + '.')
     return redirect(url_for('user', nickname=nickname))
+
+@app.route('/search', methods=['POST'])
+@login_required
+def search():
+    if not g.search_form.validate_on_submit():
+        return redirect(url_for('index'))
+    return redirect(url_for('results', query=g.search_form.search.data))
 
 
 @app.errorhandler(404)
